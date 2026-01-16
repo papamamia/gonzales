@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+<Content type="html"><![CDATA[
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat Room 1</title>
+  <style>
+    body {
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Arial Black', sans-serif;
+      overflow-x: hidden;
+      text-align: center;
+      padding-top: 30px;
+      position: relative;
+    }
+    canvas#starfield {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .neon-text {
+      font-size: 50px;
+      font-weight: bold;
+      text-transform: uppercase;
+      animation: neonGlow 4s ease-in-out infinite alternate, colorCycle 15s linear infinite;
+      margin-bottom: 20px;
+      color: white;
+      text-shadow: 0 0 15px #00aaff, 0 0 30px #0055ff;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 90%;
+      max-width: 600px;
+      border: 2px solid #00aaff;
+      border-radius: 20px;
+      padding: 20px;
+      animation: neonGlowInput 4s ease-in-out infinite alternate, colorCycle 15s linear infinite;
+      height: 500px;
+      background: rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      box-shadow: 0 0 20px #0055ff;
+    }
+    #chatBox {
+      flex-grow: 1;
+      width: 100%;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      color: white;
+      font-size: 16px;
+      text-align: left;
+    }
+    .input-container {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+    }
+    .input-container input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-family: 'Arial Black', sans-serif;
+      outline: none;
+      box-shadow: 0 0 10px #00aaff;
+    }
+    .input-container button {
+      background: none;
+      border: 2px solid #00aaff;
+      color: #00aaff;
+      padding: 10px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    .input-container button:hover {
+      background: #00aaff;
+      color: black;
+    }
+
+    @keyframes neonGlow {
+      from { text-shadow: 0 0 15px #00aaff, 0 0 30px #0055ff; }
+      to   { text-shadow: 0 0 5px #00aaff, 0 0 10px #0055ff; }
+    }
+
+    @keyframes neonGlowInput {
+      from { box-shadow: 0 0 10px #00aaff, 0 0 20px #0055ff; }
+      to   { box-shadow: 0 0 5px #00aaff, 0 0 10px #0055ff; }
+    }
+
+    @keyframes colorCycle {
+      0%, 100% { color: #00aaff; }
+      25% { color: #3399ff; }
+      50% { color: #33ccff; }
+      75% { color: #0055ff; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="starfield"></canvas>
+  <div class="neon-text">Chat Room 1</div>
+  <div class="chat-container">
+    <div id="chatBox"></div>
+    <div class="input-container">
+      <input type="text" id="usernameInput" placeholder="Username & press Enter">
+      <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-analytics.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzenPsK0jxWpXz-4a6pR4-rIgDU8Jr6hU",
+      authDomain: "idk-bruh-fc9e2.firebaseapp.com",
+      databaseURL: "https://idk-bruh-fc9e2-default-rtdb.firebaseio.com",
+      projectId: "idk-bruh-fc9e2",
+      storageBucket: "idk-bruh-fc9e2.appspot.com",
+      messagingSenderId: "68840574679",
+      appId: "1:68840574679:web:63d2ccb8fb431c3eb86a92",
+      measurementId: "G-FZX0397BC6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    const chatBox = document.getElementById('chatBox');
+    const usernameInput = document.getElementById('usernameInput');
+    const messageInput = document.getElementById('messageInput');
+
+    let username = '';
+
+    usernameInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const name = usernameInput.value.trim();
+        if (!name) {
+          alert('Username cannot be empty.');
+          return;
+        }
+        username = name;
+        usernameInput.disabled = true;
+        messageInput.disabled = false;
+      }
+    });
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[m]));
+    }
+
+    function sanitizeMessage(msg) {
+      return msg.replace(/<[^>]*>/g, '').replace(/\b(?:https?:\/\/|www\.) \S+/gi, '[link removed]');
+    }
+
+    window.sendMessage = function () {
+      if (!username) {
+        alert('Enter username first.');
+        return;
+      }
+
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      const sanitized = sanitizeMessage(message);
+
+      push(ref(db, "messages"), {
+        user: username,
+        text: sanitized,
+        timestamp: Date.now()
+      });
+
+      messageInput.value = '';
+    };
+
+    function addMessage(data) {
+      const safeUser = escapeHTML(data.user || "Anon");
+      const safeText = escapeHTML(data.text || "");
+      const time = new Date(data.timestamp || Date.now());
+      const options = {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      };
+      const dateString = time.toLocaleString('en-US', options);
+      const div = document.createElement('div');
+      div.innerHTML = `<strong>${safeUser}</strong>: ${safeText} <small style="float:right; opacity:0.7;">${dateString}</small>`;
+      div.style.marginBottom = "6px";
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    onChildAdded(ref(db, "messages"), snapshot => {
+      try {
+        addMessage(snapshot.val());
+      } catch (e) {
+        console.error("Error showing message:", e);
+      }
+    });
+
+    messageInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') sendMessage();
+    });
+
+    // Starfield animation
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function setupStars() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      stars = Array.from({ length: 150 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        speed: Math.random() * 0.5 + 0.2
+      }));
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      for (let star of stars) {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      }
+      requestAnimationFrame(animateStars);
+    }
+
+    setupStars();
+    animateStars();
+    window.addEventListener('resize', setupStars);
+  </script>
+</body>
+</html>
+
+
+]]></Content>
+</Module>
