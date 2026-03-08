@@ -154,7 +154,7 @@
     <script src="./static/js/2.feea8a5f.chunk.js"></script>
     <script src="./static/js/main.ca6b3355.chunk.js"></script>
 
-    <!-- Sticky Bottom Center Ad (728x90) with Smooth Slide-Out and Reappearance -->
+  <!-- Sticky Bottom Center Ad (728x90) with Smooth Slide-Out and Reappearance -->
 <style>
   /* Container: Bottom center, fixed, with overflow hidden */
   #ad-container {
@@ -256,7 +256,7 @@
 <div id="ad-container" aria-hidden="true" role="dialog" aria-label="Advertisement">
   <iframe
     id="ad-iframe"
-    src="https://script.google.com/macros/s/AKfycbzNG4z_PlG6Ke_bX5wSPKK2uBRB3IY9ouVzqM1shucYhSTvsJWRmyMyZaaC2z5S3ADN/exec"
+    src="https://script.google.com/macros/s/AKfycbw60Tp6nuqThxAuU8ZN1JIuPtjHoW2Uqq3fQy0CvrycN0O2AQwhRT5EDv73hh2FhXEF/exec"
     width="768px"
     height="95px"
     scrolling="no"
@@ -271,7 +271,7 @@
   (function () {
     const showDelay = 2000; // 2 seconds delay before first show
     const countdownStart = 12; // 12 seconds countdown
-    const reappearDelay = 60000; // 25 seconds before reappearance
+    const reappearDelay = 150000; // 25 seconds before reappearance
     const adContainer = document.getElementById('ad-container');
     const closeBtn = document.getElementById('close-ad');
 
@@ -313,7 +313,6 @@
     });
   })();
 </script>
-
 </body>
 
 </html>
